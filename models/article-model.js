@@ -12,7 +12,7 @@ exports.selectArticle = ({ article_id }) => {
       'articles.votes'
     )
     .from('articles')
-    .innerJoin('comments', 'articles.article_id', 'comments.article_id')
+    .leftJoin('comments', 'articles.article_id', 'comments.article_id')
     .groupBy('articles.article_id')
     .count('comments.article_id  as comment_count')
     .where('articles.article_id', '=', article_id)
@@ -51,9 +51,18 @@ exports.updateArticle = ({ article_id }, { inc_votes }) => {
   }
 };
 
-exports.insertComment = ({ article_id }, commentData) => {
-  return db('comments')
-    .insert(commentData)
+exports.insertComment = comment => {
+  return db
+    .insert(comment)
+    .into('comments')
+    .returning('*');
+};
+
+exports.selectComments = ({ article_id }, { order = 'desc' }) => {
+  return db
+    .select('comment_id', 'votes', 'author', 'body', 'created_at')
+    .from('comments')
     .where('article_id', '=', article_id)
+    .orderBy('created_at', order)
     .returning('*');
 };

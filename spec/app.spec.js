@@ -1,7 +1,8 @@
 process.env.NODE_ENV = 'test';
-const { expect } = require('chai');
-//const chaiSorted = require('chai-sorted');
-//chai.use(chaiSorted);
+const chai = require('chai');
+const chaiSorted = require('chai-sorted');
+const { expect } = chai;
+chai.use(chaiSorted);
 const request = require('supertest');
 const app = require('../app');
 const connection = require('../db/connection/connection');
@@ -40,11 +41,6 @@ describe('app', () => {
       });
     });
     describe('/users', () => {
-      it('GET status 200, responds with an array of objects', () => {
-        return request(app)
-          .get('/api/users')
-          .expect(200);
-      });
       it('GET status 200, responds with an array of objects', () => {
         return request(app)
           .get('/api/users')
@@ -190,7 +186,6 @@ describe('app', () => {
           return request(app)
             .post('/api/articles/3/comments')
             .send({
-              article_id: 3,
               author: 'icellusedkars',
               body: 'I need a new pair of glasses'
             })
@@ -199,6 +194,83 @@ describe('app', () => {
               expect(body.comment[0].body).to.equal(
                 'I need a new pair of glasses'
               );
+            });
+        });
+        it('ERROR, PATCH status 400, responds with an error message when wrong id passed', () => {
+          return request(app)
+            .post('/api/articles/one/comments')
+            .send({
+              author: 'icellusedkars',
+              body: 'I need a new pair of glasses'
+            })
+            .expect(400)
+            .then(({ body }) => {
+              expect(body.msg).to.equal('Bad Request');
+            });
+        });
+        it('ERROR, PATCH status 404, responds with an error message when the id doesnt exist', () => {
+          return request(app)
+            .post('/api/articles/20/comments')
+            .send({
+              author: 'icellusedkars',
+              body: 'I need a new pair of glasses'
+            })
+            .expect(404)
+            .then(({ body }) => {
+              expect(body.msg).to.equal('Page Not Found');
+            });
+        });
+        it('GET status 200, responds with an array of objects', () => {
+          return request(app)
+            .get('/api/articles/1/comments')
+            .expect(200)
+            .then(({ body }) => {
+              expect(body.comments).to.be.an('Array');
+              expect(body.comments[0]).to.be.an('Object');
+            });
+        });
+        it('GET status 200, responds with a comments object', () => {
+          return request(app)
+            .get('/api/articles/1/comments')
+            .expect(200)
+            .then(({ body }) => {
+              expect(body.comments).to.be.an('Array');
+              expect(body.comments[0]).to.be.an('Object');
+            });
+          topics;
+        });
+        it('GET status 200, responds with an array of comments objects and each object has the right properties', () => {
+          return request(app)
+            .get('/api/articles/1/comments')
+            .expect(200)
+            .then(({ body }) => {
+              expect(body.comments[0]).to.have.keys(
+                'comment_id',
+                'votes',
+                'author',
+                'body',
+                'created_at'
+              );
+            });
+        });
+        it('GET status 200, [DEFAULT] responds with an array of comments objects sorted by created_at in descending order', () => {
+          return request(app)
+            .get('/api/articles/1/comments')
+            .expect(200)
+            .then(({ body }) => {
+              expect(body.comments).to.be.sortedBy('created_at', {
+                descending: true
+              });
+            });
+        });
+        it('GET status 200, can set the order to asc or desc, (default=>desc)', () => {
+          return request(app)
+            .get('/api/articles/1/comments?order=asc')
+            .expect(200)
+            .then(({ body }) => {
+              expect(body.comments).to.be.sortedBy('created_at', {
+                ascending: true
+              });
             });
         });
       });
