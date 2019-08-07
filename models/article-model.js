@@ -64,5 +64,10 @@ exports.selectComments = ({ article_id }, { order = 'desc' }) => {
     .from('comments')
     .where('article_id', '=', article_id)
     .orderBy('created_at', order)
-    .returning('*');
+    .returning('*')
+    .then(comments => {
+      if (!comments.length) {
+        return Promise.reject({ msg: 'Page Not Found', status: 404 });
+      } else return comments;
+    });
 };
