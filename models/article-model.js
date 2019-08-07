@@ -71,3 +71,33 @@ exports.selectComments = ({ article_id }, { order = 'desc' }) => {
       } else return comments;
     });
 };
+exports.selectArticles = ({
+  sorted_by = 'created_at',
+  order = 'desc',
+  author,
+  topic
+}) => {
+  return db
+    .select(
+      'articles.article_id',
+      'title',
+      'topic',
+      'articles.author',
+      'articles.created_at',
+      'articles.votes'
+    )
+    .from('articles')
+    .leftJoin('comments', 'articles.article_id', 'comments.article_id')
+    .groupBy('articles.article_id')
+    .count('comments.article_id as comment_count')
+    .orderBy(sorted_by, order)
+    .modify(existingQuery => {
+      if (author) {
+        existingQuery.where('articles.author', '=', author);
+      }
+      if (topic) {
+        existingQuery.where('articles.topic', '=', topic);
+      }
+    })
+    .returning('*');
+};
