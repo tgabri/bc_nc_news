@@ -130,7 +130,7 @@ describe('app', () => {
             });
           });
       });
-      it.only('GET status 200, can change sorted by to any valid column', () => {
+      it('GET status 200, can change sorted by to any valid column', () => {
         return request(app)
           .get('/api/articles?sorted_by=topic')
           .expect(200)
@@ -383,14 +383,46 @@ describe('app', () => {
       });
       describe.only('/comments', () => {
         it('PATCH status 200, responds with an object with a value changed/updated', () => {
-            return request(app)
-              .patch('/api/comments/1')
-              .send({ inc_votes: 1 })
-              .expect(200)
-            //   .then(({ body }) => {
-            //     expect(body.updatedComment[0].votes).to.equal(1);
-            //   });
-          });
+          return request(app)
+            .patch('/api/comments/2')
+            .send({ inc_votes: 1 })
+            .expect(200)
+            .then(({ body }) => {
+              expect(body.comment[0].votes).to.equal(15);
+              expect(body.comment[0]).to.eql({
+                comment_id: 2,
+                author: 'butter_bridge',
+                article_id: 1,
+                votes: 15,
+                created_at: '2016-11-22T12:36:03.389Z',
+                body:
+                  'The beautiful thing about treasure is that it exists. Got to find out what kind of sheets these are; not cotton, not rayon, silky.'
+              });
+            });
+        });
+        it('ERROR, PATCH status 400, responds with an error message when wrong id passed', () => {
+          return request(app)
+            .patch('/api/comments/one')
+            .send({
+              inc_votes: 1
+            })
+            .expect(400)
+            .then(({ body }) => {
+              expect(body.msg).to.equal('Bad Request');
+            });
+        });
+        it('ERROR, PATCH status 404, responds with an error message when the id doesnt exist', () => {
+          return request(app)
+            .patch('/api/comments/30')
+            .send({
+              inc_votes: 1
+            })
+            .expect(404)
+            .then(({ body }) => {
+              expect(body.msg).to.equal('Page Not Found');
+            });
+        });
+      });
     });
   });
 });
