@@ -422,6 +422,11 @@ describe('app', () => {
               expect(body.msg).to.equal('Page Not Found');
             });
         });
+        it('DELETE status 204, responds with 204 if success', () => {
+          return request(app)
+            .delete('/api/comments/3')
+            .expect(204);
+        });
       });
     });
   });

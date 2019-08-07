@@ -13,3 +13,10 @@ exports.patchComment = ({ comment_id }, { inc_votes }) => {
       } else return comment;
     });
 };
+
+exports.deleteComment = ({ comment_id }) => {
+  console.log(comment_id);
+  return db('comments')
+    .where('comment_id', '=', comment_id)
+    .del();
+};
