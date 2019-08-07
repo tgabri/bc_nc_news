@@ -125,15 +125,19 @@ describe('app', () => {
           .get('/api/articles')
           .expect(200)
           .then(({ body }) => {
-            expect(body.articles).to.be.sortedBy('created_at');
+            expect(body.articles).to.be.sortedBy('created_at', {
+              descending: true
+            });
           });
       });
-      it('GET status 200, can change sorted by to any valid column', () => {
+      it.only('GET status 200, can change sorted by to any valid column', () => {
         return request(app)
           .get('/api/articles?sorted_by=topic')
           .expect(200)
           .then(({ body }) => {
-            expect(body.articles).to.be.sortedBy('topic');
+            expect(body.articles).to.be.sortedBy('topic', {
+              descending: true
+            });
           });
       });
       it('GET status 200, [DEFAULT] responds with an array of comments objects in desc order', () => {
@@ -169,8 +173,23 @@ describe('app', () => {
           .get('/api/articles?topic=cats')
           .expect(200)
           .then(({ body }) => {
-            console.log(body.articles);
             expect(body.articles[0].topic).to.be.equal('cats');
+          });
+      });
+      it('ERROR, GET status 404, responds with an error message when the id doesnt exist', () => {
+        return request(app)
+          .get('/api/articles/?topic=cat')
+          .expect(404)
+          .then(({ body }) => {
+            expect(body.msg).to.equal('Page Not Found');
+          });
+      });
+      it('ERROR, GET status 400, responds with an error message when invalid column passed', () => {
+        return request(app)
+          .get('/api/articles/?sorted_by=5')
+          .expect(400)
+          .then(({ body }) => {
+            expect(body.msg).to.equal('Bad Request');
           });
       });
       describe('/articles/:article_id', () => {
@@ -362,9 +381,16 @@ describe('app', () => {
           });
         });
       });
-    });
-    describe('/comments', () => {
-      it('PATCH', () => {});
+      describe.only('/comments', () => {
+        it('PATCH status 200, responds with an object with a value changed/updated', () => {
+            return request(app)
+              .patch('/api/comments/1')
+              .send({ inc_votes: 1 })
+              .expect(200)
+            //   .then(({ body }) => {
+            //     expect(body.updatedComment[0].votes).to.equal(1);
+            //   });
+          });
     });
   });
 });
