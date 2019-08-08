@@ -92,8 +92,8 @@ describe('app', () => {
         return request(app)
           .get('/api/users/icellusedkars')
           .expect(200)
-          .then(({ body }) => {
-            expect(body.user[0]).to.eql({
+          .then(({ body: { user } }) => {
+            expect(user).to.eql({
               username: 'icellusedkars',
               name: 'sam',
               avatar_url:
@@ -105,8 +105,9 @@ describe('app', () => {
         return request(app)
           .get('/api/users/icellusedkars')
           .expect(200)
-          .then(({ body }) => {
-            expect(body.user[0]).to.have.keys('username', 'avatar_url', 'name');
+          .then(({ body: { user } }) => {
+            console.log(user);
+            expect(user).to.have.keys('username', 'avatar_url', 'name');
           });
       });
       it('ERROR, GET status 404, responds with an error message', () => {
@@ -216,7 +217,7 @@ describe('app', () => {
             expect(body.msg).to.equal('Bad Request');
           });
       });
-      it.only('INVALID METHODS - DELETE, PATCH, PUT, responds with 405', () => {
+      it('INVALID METHODS - DELETE, PATCH, PUT, responds with 405', () => {
         const invalidMethods = ['patch', 'put', 'delete'];
         const methodPromises = invalidMethods.map(method => {
           return request(app)
@@ -229,21 +230,20 @@ describe('app', () => {
         return Promise.all(methodPromises);
       });
       describe('/articles/:article_id', () => {
-        it('GET status 200, responds with an array of object', () => {
+        it('GET status 200, responds with an article object', () => {
           return request(app)
             .get('/api/articles/1')
             .expect(200)
-            .then(({ body }) => {
-              expect(body.article).to.be.an('Array');
-              expect(body.article[0]).to.be.an('Object');
+            .then(({ body: { article } }) => {
+              expect(article).to.be.an('Object');
             });
         });
         it('GET status 200, responds with an array of topics objects and each object has the right properties', () => {
           return request(app)
             .get('/api/articles/1')
             .expect(200)
-            .then(({ body }) => {
-              expect(body.article[0]).to.have.keys(
+            .then(({ body: { article } }) => {
+              expect(article).to.have.keys(
                 'article_id',
                 'title',
                 'topic',
@@ -276,8 +276,8 @@ describe('app', () => {
             .patch('/api/articles/2')
             .send({ inc_votes: 1 })
             .expect(200)
-            .then(({ body }) => {
-              expect(body.updatedArticle[0].votes).to.equal(1);
+            .then(({ body: { updatedArticle } }) => {
+              expect(updatedArticle.votes).to.equal(1);
             });
         });
         it('ERROR, PATCH status 400, responds with an error message when wrong path called', () => {
@@ -303,8 +303,8 @@ describe('app', () => {
             .patch('/api/articles/1')
             .send({ inc_votes: 'm' })
             .expect(200)
-            .then(({ body }) => {
-              expect(body.updatedArticle[0].votes).to.equal(100);
+            .then(({ body: { updatedArticle } }) => {
+              expect(updatedArticle.votes).to.equal(100);
             });
         });
         describe('/comments', () => {

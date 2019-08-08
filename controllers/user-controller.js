@@ -7,7 +7,7 @@ exports.getUsers = (req, res, next) => {
 };
 exports.getUserByUsername = (req, res, next) => {
   selectUser(req.params)
-    .then(user => {
+    .then(([user]) => {
       res.status(200).send({ user });
     })
     .catch(err => next(err));
