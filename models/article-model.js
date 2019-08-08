@@ -28,18 +28,12 @@ exports.updateArticle = ({ article_id }, { inc_votes }) => {
     return db
       .select('*')
       .from('articles')
-      .where('article_id', article_id)
-      .then(article => {
-        if (!article.length) {
-          return Promise.reject({ msg: 'Page Not Found', status: 404 });
-        } else return article;
-      });
+      .where('article_id', article_id);
   } else {
-    return db
-      .select('*')
-      .from('articles')
+    return db('articles')
       .where('article_id', article_id)
       .increment('votes', inc_votes)
+      .returning('*')
       .then(article => {
         if (!article.length) {
           return Promise.reject({ msg: 'Page Not Found', status: 404 });
@@ -50,6 +44,7 @@ exports.updateArticle = ({ article_id }, { inc_votes }) => {
 
 exports.insertComment = comment => {
   return db
+    .select('article_id')
     .insert(comment)
     .into('comments')
     .returning('*');

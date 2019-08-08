@@ -286,7 +286,19 @@ describe('app', () => {
                 );
               });
           });
-          it('ERROR, PATCH status 400, responds with an error message when wrong id passed', () => {
+          it('ERROR, POST status 400, responds with an error message when posting a value of incorret type', () => {
+            return request(app)
+              .post('/api/articles/3/comments')
+              .send({
+                author: 8,
+                body: 'I need a new pair of glasses'
+              })
+              .expect(400)
+              .then(({ body }) => {
+                expect(body.msg).to.equal('Bad Request');
+              });
+          });
+          it('ERROR, POST status 400, responds with an error message when wrong id passed', () => {
             return request(app)
               .post('/api/articles/one/comments')
               .send({
@@ -298,16 +310,28 @@ describe('app', () => {
                 expect(body.msg).to.equal('Bad Request');
               });
           });
-          it('ERROR, PATCH status 404, responds with an error message when the id doesnt exist', () => {
+          it('ERROR, POST status 400, responds with an error message when adding non-existent columns', () => {
             return request(app)
-              .post('/api/articles/20/comments')
+              .post('/api/articles/3/comments')
+              .send({
+                athor: 'icellusedkars',
+                body: 'I need a new pair of glasses'
+              })
+              .expect(400)
+              .then(({ body }) => {
+                expect(body.msg).to.equal('Bad Request');
+              });
+          });
+          it('ERROR, POST status 422, responds with an error message when the id doesnt exist', () => {
+            return request(app)
+              .post('/api/articles/30/comments')
               .send({
                 author: 'icellusedkars',
                 body: 'I need a new pair of glasses'
               })
-              .expect(404)
+              .expect(422)
               .then(({ body }) => {
-                expect(body.msg).to.equal('Page Not Found');
+                expect(body.msg).to.equal('ID Not Found');
               });
           });
           it('GET status 200, responds with an array of objects', () => {
@@ -318,16 +342,6 @@ describe('app', () => {
                 expect(body.comments).to.be.an('Array');
                 expect(body.comments[0]).to.be.an('Object');
               });
-          });
-          it('GET status 200, responds with a comments object', () => {
-            return request(app)
-              .get('/api/articles/1/comments')
-              .expect(200)
-              .then(({ body }) => {
-                expect(body.comments).to.be.an('Array');
-                expect(body.comments[0]).to.be.an('Object');
-              });
-            topics;
           });
           it('GET status 200, responds with an array of comments objects and each object has the right properties', () => {
             return request(app)
@@ -365,7 +379,7 @@ describe('app', () => {
           });
           it('ERROR, GET status 404, responds with an error message when the id doesnt exist', () => {
             return request(app)
-              .get('/api/articles/25/comments')
+              .get('/api/articles/50/comments')
               .expect(404)
               .then(({ body }) => {
                 expect(body.msg).to.equal('Page Not Found');
@@ -381,7 +395,7 @@ describe('app', () => {
           });
         });
       });
-      describe.only('/comments', () => {
+      describe('/comments', () => {
         it('PATCH status 200, responds with an object with a value changed/updated', () => {
           return request(app)
             .patch('/api/comments/2')
@@ -411,6 +425,15 @@ describe('app', () => {
               expect(body.msg).to.equal('Bad Request');
             });
         });
+        it('ERROR, PATCH status 200, if the patchin value is not valid, it responds with the original value, untouched', () => {
+          return request(app)
+            .patch('/api/comments/2')
+            .send({ inc_votes: 'm' })
+            .expect(200)
+            .then(({ body }) => {
+              expect(body.comment[0].votes).to.equal(14);
+            });
+        });
         it('ERROR, PATCH status 404, responds with an error message when the id doesnt exist', () => {
           return request(app)
             .patch('/api/comments/30')
@@ -426,6 +449,14 @@ describe('app', () => {
           return request(app)
             .delete('/api/comments/3')
             .expect(204);
+        });
+        it('ERROR, DELETE status 400, responds with an error message when wrong id passed', () => {
+          return request(app)
+            .delete('/api/comments/one')
+            .expect(400)
+            .then(({ body }) => {
+              expect(body.msg).to.equal('Bad Request');
+            });
         });
       });
     });
