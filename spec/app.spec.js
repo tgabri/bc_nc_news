@@ -106,7 +106,6 @@ describe('app', () => {
           .get('/api/users/icellusedkars')
           .expect(200)
           .then(({ body: { user } }) => {
-            console.log(user);
             expect(user).to.have.keys('username', 'avatar_url', 'name');
           });
       });
@@ -280,6 +279,14 @@ describe('app', () => {
               expect(updatedArticle.votes).to.equal(1);
             });
         });
+        it('INVALID METHOD - POST, responds with 405', () => {
+          return request(app)
+            .post('/api/articles/1')
+            .expect(405)
+            .then(({ body: { msg } }) => {
+              expect(msg).to.equal('Method Not Allowed');
+            });
+        });
         it('ERROR, PATCH status 400, responds with an error message when wrong path called', () => {
           return request(app)
             .patch('/api/articles/one')
@@ -321,6 +328,18 @@ describe('app', () => {
                   'I need a new pair of glasses'
                 );
               });
+          });
+          it('INVALID METHODS - DELETE, PATCH, PUT, responds with 405', () => {
+            const invalidMethods = ['patch', 'put', 'delete'];
+            const methodPromises = invalidMethods.map(method => {
+              return request(app)
+                [method]('/api/articles/2/comments')
+                .expect(405)
+                .then(({ body: { msg } }) => {
+                  expect(msg).to.equal('Method Not Allowed');
+                });
+            });
+            return Promise.all(methodPromises);
           });
           it('ERROR, POST status 400, responds with an error message when posting a value of incorret type', () => {
             return request(app)
@@ -448,6 +467,14 @@ describe('app', () => {
                 body:
                   'The beautiful thing about treasure is that it exists. Got to find out what kind of sheets these are; not cotton, not rayon, silky.'
               });
+            });
+        });
+        it('INVALID METHOD - POST, responds with 405', () => {
+          return request(app)
+            .post('/api/comments/1')
+            .expect(405)
+            .then(({ body: { msg } }) => {
+              expect(msg).to.equal('Method Not Allowed');
             });
         });
         it('ERROR, PATCH status 400, responds with an error message when wrong id passed', () => {
