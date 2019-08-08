@@ -6,8 +6,12 @@ const {
   getComments,
   getArticles
 } = require('../controllers/article-controller');
+const { methodsNotAllowed } = require('../error/index');
 
-articleRouter.route('/').get(getArticles);
+articleRouter
+  .route('/')
+  .get(getArticles)
+  .all(methodsNotAllowed);
 
 articleRouter
   .route('/:article_id')

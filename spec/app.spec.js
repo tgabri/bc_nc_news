@@ -39,6 +39,18 @@ describe('app', () => {
             expect(body.topics[0]).to.have.keys('slug', 'description');
           });
       });
+      it('INVALID METHODS - DELETE, PATCH, PUT, responds with 405', () => {
+        const invalidMethods = ['patch', 'put', 'delete'];
+        const methodPromises = invalidMethods.map(method => {
+          return request(app)
+            [method]('/api/topics')
+            .expect(405)
+            .then(({ body: { msg } }) => {
+              expect(msg).to.equal('Method Not Allowed');
+            });
+        });
+        return Promise.all(methodPromises);
+      });
     });
     describe('/users', () => {
       it('GET status 200, responds with an array of objects', () => {
@@ -61,6 +73,18 @@ describe('app', () => {
               'name'
             );
           });
+      });
+      it('INVALID METHODS - DELETE, PATCH, PUT, responds with 405', () => {
+        const invalidMethods = ['patch', 'put', 'delete'];
+        const methodPromises = invalidMethods.map(method => {
+          return request(app)
+            [method]('/api/users')
+            .expect(405)
+            .then(({ body: { msg } }) => {
+              expect(msg).to.equal('Method Not Allowed');
+            });
+        });
+        return Promise.all(methodPromises);
       });
     });
     describe('/users/:username', () => {
@@ -191,6 +215,18 @@ describe('app', () => {
           .then(({ body }) => {
             expect(body.msg).to.equal('Bad Request');
           });
+      });
+      it.only('INVALID METHODS - DELETE, PATCH, PUT, responds with 405', () => {
+        const invalidMethods = ['patch', 'put', 'delete'];
+        const methodPromises = invalidMethods.map(method => {
+          return request(app)
+            [method]('/api/articles')
+            .expect(405)
+            .then(({ body: { msg } }) => {
+              expect(msg).to.equal('Method Not Allowed');
+            });
+        });
+        return Promise.all(methodPromises);
       });
       describe('/articles/:article_id', () => {
         it('GET status 200, responds with an array of object', () => {

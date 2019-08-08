@@ -3,8 +3,12 @@ const {
   getUsers,
   getUserByUsername
 } = require('../controllers/user-controller');
+const { methodsNotAllowed } = require('../error/index');
 
-userRouter.route('/').get(getUsers);
+userRouter
+  .route('/')
+  .get(getUsers)
+  .all(methodsNotAllowed);
 userRouter.route('/:username').get(getUserByUsername);
 
 module.exports = userRouter;
