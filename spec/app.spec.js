@@ -13,6 +13,14 @@ describe('app', () => {
   });
   after(() => connection.destroy());
   describe('/api', () => {
+    it('Endpoint JSON', () => {
+      return request(app)
+        .get('/api')
+        .expect(200)
+        .then(({ body }) => {
+          expect(body).to.be.an('object');
+        });
+    });
     it('ERROR status 404 when wrong path given', () => {
       return request(app)
         .get('/api/tupic')
@@ -106,6 +114,7 @@ describe('app', () => {
           .get('/api/users/icellusedkars')
           .expect(200)
           .then(({ body: { user } }) => {
+            console.log(user);
             expect(user).to.have.keys('username', 'avatar_url', 'name');
           });
       });
@@ -324,7 +333,8 @@ describe('app', () => {
               })
               .expect(201)
               .then(({ body }) => {
-                expect(body.comment[0].body).to.equal(
+                console.log(body.comment);
+                expect(body.comment.body).to.equal(
                   'I need a new pair of glasses'
                 );
               });
@@ -457,8 +467,8 @@ describe('app', () => {
             .send({ inc_votes: 1 })
             .expect(200)
             .then(({ body }) => {
-              expect(body.comment[0].votes).to.equal(15);
-              expect(body.comment[0]).to.eql({
+              expect(body.comment.votes).to.equal(15);
+              expect(body.comment).to.eql({
                 comment_id: 2,
                 author: 'butter_bridge',
                 article_id: 1,
@@ -494,7 +504,7 @@ describe('app', () => {
             .send({ inc_votes: 'm' })
             .expect(200)
             .then(({ body }) => {
-              expect(body.comment[0].votes).to.equal(14);
+              expect(body.comment.votes).to.equal(14);
             });
         });
         it('ERROR, PATCH status 404, responds with an error message when the id doesnt exist', () => {

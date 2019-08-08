@@ -26,7 +26,7 @@ exports.patchArticle = (req, res, next) => {
 
 exports.createComment = (req, res, next) => {
   insertComment({ ...req.params, ...req.body })
-    .then(comment => {
+    .then(([comment]) => {
       res.status(201).send({ comment });
     })
     .catch(next);
