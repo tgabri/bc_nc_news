@@ -21,6 +21,18 @@ describe('app', () => {
           expect(body).to.be.an('object');
         });
     });
+    it('INVALID METHODS - DELETE, PATCH, PUT, responds with 405', () => {
+      const invalidMethods = ['patch', 'put', 'delete'];
+      const methodPromises = invalidMethods.map(method => {
+        return request(app)
+          [method]('/api')
+          .expect(405)
+          .then(({ body: { msg } }) => {
+            expect(msg).to.equal('Method Not Allowed');
+          });
+      });
+      return Promise.all(methodPromises);
+    });
     it('ERROR status 404 when wrong path given', () => {
       return request(app)
         .get('/api/tupic')
@@ -114,7 +126,6 @@ describe('app', () => {
           .get('/api/users/icellusedkars')
           .expect(200)
           .then(({ body: { user } }) => {
-            console.log(user);
             expect(user).to.have.keys('username', 'avatar_url', 'name');
           });
       });
@@ -125,6 +136,18 @@ describe('app', () => {
           .then(({ body }) => {
             expect(body.msg).to.equal('Page Not Found');
           });
+      });
+      it('INVALID METHODS - DELETE, PATCH, PUT, responds with 405', () => {
+        const invalidMethods = ['patch', 'put', 'delete'];
+        const methodPromises = invalidMethods.map(method => {
+          return request(app)
+            [method]('/api/users/butter_bridge')
+            .expect(405)
+            .then(({ body: { msg } }) => {
+              expect(msg).to.equal('Method Not Allowed');
+            });
+        });
+        return Promise.all(methodPromises);
       });
     });
     describe('/articles', () => {
@@ -165,10 +188,10 @@ describe('app', () => {
       });
       it('GET status 200, can change sorted by to any valid column', () => {
         return request(app)
-          .get('/api/articles?sorted_by=topic')
+          .get('/api/articles?sorted_by=author')
           .expect(200)
           .then(({ body }) => {
-            expect(body.articles).to.be.sortedBy('topic', {
+            expect(body.articles).to.be.sortedBy('author', {
               descending: true
             });
           });
@@ -284,8 +307,8 @@ describe('app', () => {
             .patch('/api/articles/2')
             .send({ inc_votes: 1 })
             .expect(200)
-            .then(({ body: { updatedArticle } }) => {
-              expect(updatedArticle.votes).to.equal(1);
+            .then(({ body: { article } }) => {
+              expect(article.votes).to.equal(1);
             });
         });
         it('INVALID METHOD - POST, responds with 405', () => {
@@ -314,13 +337,22 @@ describe('app', () => {
               expect(body.msg).to.equal('Page Not Found');
             });
         });
-        it('ERROR, PATCH status 200, if the patchin value is not valid, it responds with the original value, untouched', () => {
+        it('ERROR, PATCH status 400, if the patching value is not valid, it responds with the original value, untouched', () => {
           return request(app)
             .patch('/api/articles/1')
             .send({ inc_votes: 'm' })
+            .expect(400)
+            .then(({ body }) => {
+              expect(body.msg).to.equal('Bad Request');
+            });
+        });
+        it('ERROR, PATCH status 200, if invalid key passed, it responds with the original value, untouched', () => {
+          return request(app)
+            .patch('/api/articles/1')
+            .send({ invalid: 1 })
             .expect(200)
-            .then(({ body: { updatedArticle } }) => {
-              expect(updatedArticle.votes).to.equal(100);
+            .then(({ body: { article } }) => {
+              expect(article.votes).to.equal(100);
             });
         });
         describe('/comments', () => {
@@ -333,9 +365,27 @@ describe('app', () => {
               })
               .expect(201)
               .then(({ body }) => {
-                console.log(body.comment);
                 expect(body.comment.body).to.equal(
                   'I need a new pair of glasses'
+                );
+              });
+          });
+          it('POST status 201, responds with the posted comment object', () => {
+            return request(app)
+              .post('/api/articles/1/comments')
+              .send({
+                author: 'icellusedkars',
+                body: 'I need a new pair of glasses'
+              })
+              .expect(201)
+              .then(({ body }) => {
+                expect(body.comment).to.has.keys(
+                  'comment_id',
+                  'author',
+                  'article_id',
+                  'votes',
+                  'created_at',
+                  'body'
                 );
               });
           });
@@ -351,11 +401,10 @@ describe('app', () => {
             });
             return Promise.all(methodPromises);
           });
-          it('ERROR, POST status 400, responds with an error message when posting a value of incorret type', () => {
+          it('ERROR, POST status 400, responds with an error message when it  does not include all the required keys', () => {
             return request(app)
-              .post('/api/articles/3/comments')
+              .post('/api/articles/one/comments')
               .send({
-                author: 8,
                 body: 'I need a new pair of glasses'
               })
               .expect(400)
@@ -375,18 +424,6 @@ describe('app', () => {
                 expect(body.msg).to.equal('Bad Request');
               });
           });
-          it('ERROR, POST status 400, responds with an error message when adding non-existent columns', () => {
-            return request(app)
-              .post('/api/articles/3/comments')
-              .send({
-                athor: 'icellusedkars',
-                body: 'I need a new pair of glasses'
-              })
-              .expect(400)
-              .then(({ body }) => {
-                expect(body.msg).to.equal('Bad Request');
-              });
-          });
           it('ERROR, POST status 422, responds with an error message when the id doesnt exist', () => {
             return request(app)
               .post('/api/articles/30/comments')
@@ -396,7 +433,7 @@ describe('app', () => {
               })
               .expect(422)
               .then(({ body }) => {
-                expect(body.msg).to.equal('ID Not Found');
+                expect(body.msg).to.equal('Unprocessable Entity');
               });
           });
           it('GET status 200, responds with an array of objects', () => {
@@ -422,6 +459,14 @@ describe('app', () => {
                 );
               });
           });
+          it('GET status 200, serve an empty array when the article exists but has no comments', () => {
+            return request(app)
+              .get('/api/articles/2/comments')
+              .expect(200)
+              .then(({ body }) => {
+                expect(body.comments).to.eql([]);
+              });
+          });
           it('GET status 200, [DEFAULT] responds with an array of comments objects sorted by created_at in descending order', () => {
             return request(app)
               .get('/api/articles/1/comments')
@@ -442,12 +487,14 @@ describe('app', () => {
                 });
               });
           });
-          it('ERROR, GET status 404, responds with an error message when the id doesnt exist', () => {
+          it('GET status 200, accept a "sort_by" query of any valid column', () => {
             return request(app)
-              .get('/api/articles/50/comments')
-              .expect(404)
+              .get('/api/articles/1/comments?sorted_by=votes')
+              .expect(200)
               .then(({ body }) => {
-                expect(body.msg).to.equal('Page Not Found');
+                expect(body.comments).to.be.sortedBy('votes', {
+                  descending: true
+                });
               });
           });
           it('ERROR, GET status 400, responds with an error message when wrong path called', () => {
@@ -455,82 +502,92 @@ describe('app', () => {
               .get('/api/articles/one/comments')
               .expect(400)
               .then(({ body }) => {
-                expect(body.msg).to.equal('Bad Request');
+                expect(body.msg).to.equal(
+                  'Bad Request: Given ID is not an integer'
+                );
               });
           });
         });
       });
-      describe('/comments', () => {
-        it('PATCH status 200, responds with an object with a value changed/updated', () => {
-          return request(app)
-            .patch('/api/comments/2')
-            .send({ inc_votes: 1 })
-            .expect(200)
-            .then(({ body }) => {
-              expect(body.comment.votes).to.equal(15);
-              expect(body.comment).to.eql({
-                comment_id: 2,
-                author: 'butter_bridge',
-                article_id: 1,
-                votes: 15,
-                created_at: '2016-11-22T12:36:03.389Z',
-                body:
-                  'The beautiful thing about treasure is that it exists. Got to find out what kind of sheets these are; not cotton, not rayon, silky.'
-              });
-            });
-        });
-        it('INVALID METHOD - POST, responds with 405', () => {
-          return request(app)
-            .post('/api/comments/1')
-            .expect(405)
-            .then(({ body: { msg } }) => {
-              expect(msg).to.equal('Method Not Allowed');
-            });
-        });
-        it('ERROR, PATCH status 400, responds with an error message when wrong id passed', () => {
-          return request(app)
-            .patch('/api/comments/one')
-            .send({
-              inc_votes: 1
-            })
-            .expect(400)
-            .then(({ body }) => {
-              expect(body.msg).to.equal('Bad Request');
-            });
-        });
-        it('ERROR, PATCH status 200, if the patchin value is not valid, it responds with the original value, untouched', () => {
-          return request(app)
-            .patch('/api/comments/2')
-            .send({ inc_votes: 'm' })
-            .expect(200)
-            .then(({ body }) => {
-              expect(body.comment.votes).to.equal(14);
-            });
-        });
-        it('ERROR, PATCH status 404, responds with an error message when the id doesnt exist', () => {
-          return request(app)
-            .patch('/api/comments/30')
-            .send({
-              inc_votes: 1
-            })
-            .expect(404)
-            .then(({ body }) => {
-              expect(body.msg).to.equal('Page Not Found');
-            });
-        });
-        it('DELETE status 204, responds with 204 if success', () => {
-          return request(app)
-            .delete('/api/comments/3')
-            .expect(204);
-        });
-        it('ERROR, DELETE status 400, responds with an error message when wrong id passed', () => {
-          return request(app)
-            .delete('/api/comments/one')
-            .expect(400)
-            .then(({ body }) => {
-              expect(body.msg).to.equal('Bad Request');
-            });
-        });
+    });
+    describe('/comments', () => {
+      it('PATCH status 200, responds with an object with a value changed/updated', () => {
+        return request(app)
+          .patch('/api/comments/1')
+          .send({ inc_votes: 1 })
+          .expect(200)
+          .then(({ body }) => {
+            expect(body.comment.votes).to.equal(17);
+          });
+      });
+      it('INVALID METHOD - POST, responds with 405', () => {
+        return request(app)
+          .post('/api/comments/1')
+          .expect(405)
+          .then(({ body: { msg } }) => {
+            expect(msg).to.equal('Method Not Allowed');
+          });
+      });
+      it('ERROR, PATCH status 400, responds with an error message when wrong id passed', () => {
+        return request(app)
+          .patch('/api/comments/one')
+          .send({
+            inc_votes: 1
+          })
+          .expect(400)
+          .then(({ body }) => {
+            expect(body.msg).to.equal('Bad Request');
+          });
+      });
+      it('ERROR, PATCH status 400, if the value passed is not valid, it responds with an error message', () => {
+        return request(app)
+          .patch('/api/comments/2')
+          .send({ inc_votes: 'm' })
+          .expect(400)
+          .then(({ body }) => {
+            expect(body.msg).to.equal('Bad Request');
+          });
+      });
+      it('ERROR, PATCH status 200, if invalid or missing key passed, it responds with the original value, untouched', () => {
+        return request(app)
+          .patch('/api/comments/1')
+          .send({ invalid: 1 })
+          .expect(200)
+          .then(({ body: { comment } }) => {
+            expect(comment.votes).to.equal(16);
+          });
+      });
+      it('ERROR, PATCH status 404, responds with an error message when the id doesnt exist', () => {
+        return request(app)
+          .patch('/api/comments/30')
+          .send({
+            inc_votes: 1
+          })
+          .expect(404)
+          .then(({ body }) => {
+            expect(body.msg).to.equal('Page Not Found');
+          });
+      });
+      it('DELETE status 204, responds with 204 if success', () => {
+        return request(app)
+          .delete('/api/comments/3')
+          .expect(204);
+      });
+      it('ERROR, DELETE status 400, responds with an error message when wrong id passed', () => {
+        return request(app)
+          .delete('/api/comments/one')
+          .expect(400)
+          .then(({ body }) => {
+            expect(body.msg).to.equal('Bad Request');
+          });
+      });
+      it('ERROR, DELETE status 404, responds with an error message when id does not exist', () => {
+        return request(app)
+          .delete('/api/comments/55')
+          .expect(404)
+          .then(({ body }) => {
+            expect(body.msg).to.equal('Page Not Found');
+          });
       });
     });
   });

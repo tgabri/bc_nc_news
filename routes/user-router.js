@@ -9,6 +9,9 @@ userRouter
   .route('/')
   .get(getUsers)
   .all(methodsNotAllowed);
-userRouter.route('/:username').get(getUserByUsername);
+userRouter
+  .route('/:username')
+  .get(getUserByUsername)
+  .all(methodsNotAllowed);
 
 module.exports = userRouter;

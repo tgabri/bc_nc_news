@@ -23,45 +23,36 @@ exports.selectArticle = ({ article_id }) => {
     });
 };
 
-exports.updateArticle = ({ article_id }, { inc_votes }) => {
-  if (typeof inc_votes !== 'number') {
-    return db
-      .select('*')
-      .from('articles')
-      .where('article_id', article_id);
-  } else {
-    return db('articles')
-      .where('article_id', article_id)
-      .increment('votes', inc_votes)
-      .returning('*')
-      .then(article => {
-        if (!article.length) {
-          return Promise.reject({ msg: 'Page Not Found', status: 404 });
-        } else return article;
-      });
-  }
+exports.updateArticle = ({ article_id }, { inc_votes = 0 }) => {
+  return db('articles')
+    .where('article_id', article_id)
+    .increment('votes', inc_votes)
+    .returning('*')
+    .then(article => {
+      if (!article.length) {
+        return Promise.reject({ msg: 'Page Not Found', status: 404 });
+      } else return article;
+    });
 };
 
 exports.insertComment = comment => {
   return db
-    .select('article_id')
     .insert(comment)
     .into('comments')
     .returning('*');
 };
 
-exports.selectComments = ({ article_id }, { order = 'desc' }) => {
+exports.selectComments = (
+  { article_id },
+  { order = 'desc', sorted_by = 'created_at' }
+) => {
   return db
     .select('comment_id', 'votes', 'author', 'body', 'created_at')
     .from('comments')
     .where('article_id', '=', article_id)
-    .orderBy('created_at', order)
-    .then(comments => {
-      if (!comments.length) {
-        return Promise.reject({ msg: 'Page Not Found', status: 404 });
-      } else return comments;
-    });
+    .orderBy(sorted_by, order);
 };
+
 exports.selectArticles = ({
   sorted_by = 'created_at',
   order = 'desc',

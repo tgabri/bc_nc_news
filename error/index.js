@@ -1,10 +1,9 @@
 exports.handlePSQLErrors = (err, req, res, next) => {
-  console.log(err);
   if (err.code === '22P02' || err.code === '42703')
     res.status(400).send({ msg: 'Bad Request' });
   else if (err.code === '23503') {
     if (err.constraint === 'comments_article_id_foreign') {
-      res.status(422).send({ msg: 'ID Not Found' });
+      res.status(422).send({ msg: 'Unprocessable Entity' });
     } else {
       res.status(400).send({ msg: 'Bad Request' });
     }
