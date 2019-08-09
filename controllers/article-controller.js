@@ -32,7 +32,6 @@ exports.createComment = (req, res, next) => {
 };
 
 exports.getComments = (req, res, next) => {
-  console.log(req.query);
   const { article_id } = req.params;
   const { order, sorted_by } = req.query;
   const regex = /\d+/gm;
@@ -42,14 +41,18 @@ exports.getComments = (req, res, next) => {
       msg: 'Bad Request: Given ID is not an integer'
     });
   }
-  selectArticle(article_id)
-    .then()
-    .catch(next);
-  selectComments(article_id, order, sorted_by)
-    .then(comments => {
-      res.status(200).send({ comments });
+  const article = selectArticle(article_id);
+  const comments = selectComments(article_id, order, sorted_by);
+  Promise.all([article, comments])
+    .then(([article, comments]) => {
+      if (article[0].comment_count === '0') {
+        res.status(200).send({ comments: [] });
+      } else {
+        res.status(200).send({ comments });
+      }
+      return comments;
     })
-    .catch(next);
+    .catch(err => next(err));
 };
 
 exports.getArticles = (req, res, next) => {

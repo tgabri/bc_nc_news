@@ -512,7 +512,6 @@ describe('app', () => {
               .get('/api/articles/25/comments')
               .expect(404)
               .then(({ body }) => {
-                console.log(body);
                 expect(body.msg).to.equal('Page Not Found');
               });
           });
