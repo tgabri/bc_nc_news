@@ -507,6 +507,15 @@ describe('app', () => {
                 );
               });
           });
+          it('ERROR, GET status 404, responds with an error message when article does not exist', () => {
+            return request(app)
+              .get('/api/articles/25/comments')
+              .expect(404)
+              .then(({ body }) => {
+                console.log(body);
+                expect(body.msg).to.equal('Page Not Found');
+              });
+          });
         });
       });
     });

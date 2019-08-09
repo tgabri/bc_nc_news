@@ -1,6 +1,6 @@
 const db = require('../db/connection/connection');
 
-exports.selectArticle = ({ article_id }) => {
+exports.selectArticle = article_id => {
   return db
     .select(
       'articles.article_id',
@@ -43,8 +43,9 @@ exports.insertComment = comment => {
 };
 
 exports.selectComments = (
-  { article_id },
-  { order = 'desc', sorted_by = 'created_at' }
+  article_id,
+  order = 'desc',
+  sorted_by = 'created_at'
 ) => {
   return db
     .select('comment_id', 'votes', 'author', 'body', 'created_at')

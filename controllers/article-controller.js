@@ -7,7 +7,8 @@ const {
 } = require('../models/article-model');
 
 exports.getArticle = (req, res, next) => {
-  selectArticle(req.params)
+  const { article_id } = req.params;
+  selectArticle(article_id)
     .then(([article]) => {
       res.status(200).send({ article });
     })
@@ -31,7 +32,9 @@ exports.createComment = (req, res, next) => {
 };
 
 exports.getComments = (req, res, next) => {
+  console.log(req.query);
   const { article_id } = req.params;
+  const { order, sorted_by } = req.query;
   const regex = /\d+/gm;
   if (!regex.test(article_id)) {
     return next({
@@ -39,7 +42,10 @@ exports.getComments = (req, res, next) => {
       msg: 'Bad Request: Given ID is not an integer'
     });
   }
-  selectComments(req.params, req.query)
+  selectArticle(article_id)
+    .then()
+    .catch(next);
+  selectComments(article_id, order, sorted_by)
     .then(comments => {
       res.status(200).send({ comments });
     })
