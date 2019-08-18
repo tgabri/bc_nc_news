@@ -59,6 +59,30 @@ describe('app', () => {
             expect(body.topics[0]).to.have.keys('slug', 'description');
           });
       });
+      it('POST status 201, responds with the posted topic object', () => {
+        return request(app)
+          .post('/api/topics')
+          .send({
+            slug: 'witch',
+            description: 'The man, the legend'
+          })
+          .expect(201)
+          .then(({ body }) => {
+            expect(body.topic.slug).to.equal('witch');
+            expect(body.topic.description).to.equal('The man, the legend');
+          });
+      });
+      it('ERROR, POST status 400, responds with an error message when it  does not include all the required keys', () => {
+        return request(app)
+          .post('/api/topics')
+          .send({
+            description: 'Student SUES Mitch!'
+          })
+          .expect(400)
+          .then(({ body }) => {
+            expect(body.msg).to.equal('Bad Request');
+          });
+      });
       it('INVALID METHODS - DELETE, PATCH, PUT, responds with 405', () => {
         const invalidMethods = ['patch', 'put', 'delete'];
         const methodPromises = invalidMethods.map(method => {
