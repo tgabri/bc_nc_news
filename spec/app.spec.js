@@ -131,6 +131,32 @@ describe('app', () => {
         return Promise.all(methodPromises);
       });
     });
+    it('POST status 201, responds with the posted user object', () => {
+      return request(app)
+        .post('/api/users')
+        .send({
+          username: 'mitch22',
+          avatar_url:
+            'https://avatars2.githubusercontent.com/u/24604688?s=460&v=4',
+          name: 'mitch'
+        })
+        .expect(201)
+        .then(({ body }) => {
+          expect(body.user.username).to.equal('mitch22');
+          expect(body.user.name).to.equal('mitch');
+        });
+    });
+    it('ERROR, POST status 400, responds with an error message when it  does not include all the required keys', () => {
+      return request(app)
+        .post('/api/users')
+        .send({
+          name: 'Student SUES Mitch!'
+        })
+        .expect(400)
+        .then(({ body }) => {
+          expect(body.msg).to.equal('Bad Request');
+        });
+    });
     describe('/users/:username', () => {
       it('GET status 200, responds with a user object', () => {
         return request(app)

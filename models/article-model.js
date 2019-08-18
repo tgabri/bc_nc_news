@@ -42,10 +42,14 @@ exports.updateArticle = ({ article_id }, { inc_votes = 0 }) => {
 };
 
 exports.insertComment = comment => {
-  return db
-    .insert(comment)
-    .into('comments')
-    .returning('*');
+  if (!comment.hasOwnProperty('author', 'body')) {
+    return Promise.reject({ msg: 'Bad Request', status: 400 });
+  } else {
+    return db
+      .insert(comment)
+      .into('comments')
+      .returning('*');
+  }
 };
 
 exports.insertArticle = article => {
@@ -94,7 +98,6 @@ exports.selectArticles = ({
   p,
   username
 }) => {
-  console.log(username);
   if (
     sorted_by === 'article_id' ||
     'title' ||
