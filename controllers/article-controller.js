@@ -3,7 +3,8 @@ const {
   updateArticle,
   insertComment,
   selectComments,
-  selectArticles
+  selectArticles,
+  insertArticle
 } = require('../models/article-model');
 
 exports.getArticle = (req, res, next) => {
@@ -33,7 +34,7 @@ exports.createComment = (req, res, next) => {
 
 exports.getComments = (req, res, next) => {
   const { article_id } = req.params;
-  const { order, sorted_by } = req.query;
+  const { order, sorted_by, limit, p } = req.query;
   const regex = /\d+/gm;
   if (!regex.test(article_id)) {
     return next({
@@ -42,7 +43,7 @@ exports.getComments = (req, res, next) => {
     });
   }
   const article = selectArticle(article_id);
-  const comments = selectComments(article_id, order, sorted_by);
+  const comments = selectComments(article_id, order, sorted_by, limit, p);
   Promise.all([article, comments])
     .then(([article, comments]) => {
       if (article[0].comment_count === '0') {
@@ -59,6 +60,14 @@ exports.getArticles = (req, res, next) => {
   selectArticles(req.query)
     .then(articles => {
       res.status(200).send({ articles });
+    })
+    .catch(next);
+};
+
+exports.addArticle = (req, res, next) => {
+  insertArticle(req.body)
+    .then(([article]) => {
+      res.status(201).send({ article });
     })
     .catch(next);
 };

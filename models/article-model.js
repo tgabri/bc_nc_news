@@ -16,6 +16,12 @@ exports.selectArticle = article_id => {
     .groupBy('articles.article_id')
     .count('comments.article_id  as comment_count')
     .where('articles.article_id', '=', article_id)
+    .then(articles =>
+      articles.map(article => {
+        const { author, ...restOfArticles } = article;
+        return { ...restOfArticles, username: author };
+      })
+    )
     .then(article => {
       if (!article.length) {
         return Promise.reject({ msg: 'Page Not Found', status: 404 });
@@ -42,31 +48,49 @@ exports.insertComment = comment => {
     .returning('*');
 };
 
+exports.insertArticle = article => {
+  return db
+    .insert(article)
+    .into('articles')
+    .returning('*')
+    .then(article => {
+      if (!article.hasOwnProperty('author', 'title', 'topic')) {
+        return Promise.reject({ msg: 'Bad Request', status: 400 });
+      } else return article;
+    });
+};
+
 exports.selectComments = (
   article_id,
   order = 'desc',
-  sorted_by = 'created_at'
+  sorted_by = 'created_at',
+  limit = 10,
+  p
 ) => {
   return db
     .select('comment_id', 'votes', 'author', 'body', 'created_at')
     .from('comments')
     .where('article_id', '=', article_id)
-    .orderBy(sorted_by, order);
+    .orderBy(sorted_by, order)
+    .limit(limit)
+    .offset(p * limit - limit);
 };
 
 exports.selectArticles = ({
   sorted_by = 'created_at',
   order = 'desc',
   author,
-  topic
+  topic,
+  limit = 10,
+  p
 }) => {
   if (
     sorted_by === 'article_id' ||
-    sorted_by === 'title' ||
-    sorted_by === 'topic' ||
-    sorted_by === 'author' ||
-    sorted_by === 'created_at' ||
-    sorted_by === 'votes'
+    'title' ||
+    'topic' ||
+    'author' ||
+    'created_at' ||
+    'votes'
   ) {
     return db
       .select(
@@ -81,7 +105,10 @@ exports.selectArticles = ({
       .leftJoin('comments', 'articles.article_id', 'comments.article_id')
       .groupBy('articles.article_id')
       .count('comments.article_id as comment_count')
+      .count('articles.article_id as total_count')
       .orderBy(sorted_by, order)
+      .limit(limit)
+      .offset(p * limit - limit)
       .modify(existingQuery => {
         if (author) {
           existingQuery.where('articles.author', '=', author);
@@ -90,6 +117,12 @@ exports.selectArticles = ({
           existingQuery.where('articles.topic', '=', topic);
         } else existingQuery;
       })
+      .then(articles =>
+        articles.map(article => {
+          const { author, ...restOfArticles } = article;
+          return { ...restOfArticles, username: author };
+        })
+      )
       .then(articles => {
         if (!articles.length) {
           return Promise.reject({ msg: 'Page Not Found', status: 404 });

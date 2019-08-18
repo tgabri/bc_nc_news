@@ -150,7 +150,7 @@ describe('app', () => {
         return Promise.all(methodPromises);
       });
     });
-    describe('/articles', () => {
+    describe.only('/articles', () => {
       it('GET status 200, responds with an array of objects', () => {
         return request(app)
           .get('/api/articles')
@@ -164,16 +164,22 @@ describe('app', () => {
         return request(app)
           .get('/api/articles')
           .expect(200)
-          .then(({ body }) => {
-            expect(body.articles[0]).to.have.keys(
-              'article_id',
-              'title',
-              'topic',
-              'author',
-              'created_at',
-              'votes',
-              'comment_count'
-            );
+          .then(({ body: { articles } }) => {
+            expect(articles.every(article => article.article_id)).to.be.true;
+            expect(articles.every(article => article.title)).to.be.true;
+            expect(articles.every(article => article.topic)).to.be.true;
+            expect(articles.every(article => article.username)).to.be.true;
+            expect(articles.every(article => article.created_at)).to.be.true;
+            expect(articles.every(article => article.comment_count)).to.be.true;
+            // expect(articles.every(article => article.votes)).to.be.true;
+          });
+      });
+      it('GET status 200, it has a total_count property', () => {
+        return request(app)
+          .get('/api/articles')
+          .expect(200)
+          .then(({ body: { articles } }) => {
+            expect(articles.every(article => article.total_count)).to.be.true;
           });
       });
       it('GET status 200, [DEFAULT] responds with an array of comments objects sorted by date', () => {
@@ -232,6 +238,55 @@ describe('app', () => {
             expect(body.articles[0].topic).to.be.equal('cats');
           });
       });
+      it('GET status 200, [DEFAULT] responds with an array of article objects limited to 10', () => {
+        return request(app)
+          .get('/api/articles')
+          .expect(200)
+          .then(({ body }) => {
+            console.log(body);
+            expect(body.articles).to.have.lengthOf(10);
+          });
+      });
+      it('GET status 200, can change limit to any number', () => {
+        return request(app)
+          .get('/api/articles?limit=5')
+          .expect(200)
+          .then(({ body }) => {
+            expect(body.articles).to.have.lengthOf(5);
+          });
+      });
+      it('GET status 200, can pick a page to start from', () => {
+        return request(app)
+          .get('/api/articles?limit=5&p=3')
+          .expect(200)
+          .then(({ body }) => {
+            expect(body.articles).to.have.lengthOf(2);
+          });
+      });
+      it('POST status 201, responds with the posted comment object', () => {
+        return request(app)
+          .post('/api/articles')
+          .send({
+            author: 'icellusedkars',
+            title: 'Student SUES Mitch!',
+            topic: 'mitch'
+          })
+          .expect(201)
+          .then(({ body }) => {
+            expect(body.article.title).to.equal('Student SUES Mitch!');
+          });
+      });
+      it.only('ERROR, POST status 400, responds with an error message when it  does not include all the required keys', () => {
+        return request(app)
+          .post('/api/articles')
+          .send({
+            title: 'Student SUES Mitch!'
+          })
+          .expect(400)
+          .then(({ body }) => {
+            expect(body.msg).to.equal('Bad Request');
+          });
+      });
       it('ERROR, GET status 404, responds with an error message when the id doesnt exist', () => {
         return request(app)
           .get('/api/articles/?topic=cat')
@@ -278,7 +333,7 @@ describe('app', () => {
                 'article_id',
                 'title',
                 'topic',
-                'author',
+                'username',
                 'body',
                 'created_at',
                 'votes',
@@ -434,6 +489,22 @@ describe('app', () => {
               .expect(422)
               .then(({ body }) => {
                 expect(body.msg).to.equal('Unprocessable Entity');
+              });
+          });
+          it('GET status 200, can change limit to any number', () => {
+            return request(app)
+              .get('/api/articles/1/comments?limit=10')
+              .expect(200)
+              .then(({ body }) => {
+                expect(body.comments).to.have.lengthOf(10);
+              });
+          });
+          it('GET status 200, can pick a page to start from', () => {
+            return request(app)
+              .get('/api/articles/1/comments?limit=10&p=2')
+              .expect(200)
+              .then(({ body }) => {
+                expect(body.comments).to.have.lengthOf(3);
               });
           });
           it('GET status 200, responds with an array of objects', () => {

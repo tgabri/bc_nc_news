@@ -4,13 +4,15 @@ const {
   patchArticle,
   createComment,
   getComments,
-  getArticles
+  getArticles,
+  addArticle
 } = require('../controllers/article-controller');
 const { methodsNotAllowed } = require('../error/index');
 
 articleRouter
   .route('/')
   .get(getArticles)
+  .post(addArticle)
   .all(methodsNotAllowed);
 
 articleRouter
