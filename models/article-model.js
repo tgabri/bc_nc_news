@@ -49,14 +49,23 @@ exports.insertComment = comment => {
 };
 
 exports.insertArticle = article => {
-  return db
-    .insert(article)
-    .into('articles')
-    .returning('*')
+  if (!article.hasOwnProperty('author', 'body', 'title', 'topic')) {
+    return Promise.reject({ msg: 'Bad Request', status: 400 });
+  } else {
+    return db
+      .insert(article)
+      .into('articles')
+      .returning('*');
+  }
+};
+
+exports.deleteArticle = ({ article_id }) => {
+  return db('articles')
+    .where('article_id', '=', article_id)
+    .del()
     .then(article => {
-      if (!article.hasOwnProperty('author', 'title', 'topic')) {
-        return Promise.reject({ msg: 'Bad Request', status: 400 });
-      } else return article;
+      if (article === 0)
+        return Promise.reject({ msg: 'Page Not Found', status: 404 });
     });
 };
 
@@ -82,8 +91,10 @@ exports.selectArticles = ({
   author,
   topic,
   limit = 10,
-  p
+  p,
+  username
 }) => {
+  console.log(username);
   if (
     sorted_by === 'article_id' ||
     'title' ||
@@ -113,6 +124,9 @@ exports.selectArticles = ({
         if (author) {
           existingQuery.where('articles.author', '=', author);
         }
+        if (username) {
+          existingQuery.where('articles.author', '=', username);
+        }
         if (topic) {
           existingQuery.where('articles.topic', '=', topic);
         } else existingQuery;
@@ -129,6 +143,6 @@ exports.selectArticles = ({
         } else return articles;
       });
   } else {
+    return Promise.reject({ msg: 'Bad Request', status: 400 });
   }
-  return Promise.reject({ msg: 'Bad Request', status: 400 });
 };

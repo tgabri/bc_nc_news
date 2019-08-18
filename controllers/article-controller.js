@@ -4,7 +4,8 @@ const {
   insertComment,
   selectComments,
   selectArticles,
-  insertArticle
+  insertArticle,
+  deleteArticle
 } = require('../models/article-model');
 
 exports.getArticle = (req, res, next) => {
@@ -68,6 +69,14 @@ exports.addArticle = (req, res, next) => {
   insertArticle(req.body)
     .then(([article]) => {
       res.status(201).send({ article });
+    })
+    .catch(next);
+};
+
+exports.removeArticle = (req, res, next) => {
+  deleteArticle(req.params)
+    .then(article => {
+      res.sendStatus(204);
     })
     .catch(next);
 };

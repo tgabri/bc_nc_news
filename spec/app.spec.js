@@ -150,7 +150,7 @@ describe('app', () => {
         return Promise.all(methodPromises);
       });
     });
-    describe.only('/articles', () => {
+    describe('/articles', () => {
       it('GET status 200, responds with an array of objects', () => {
         return request(app)
           .get('/api/articles')
@@ -194,10 +194,10 @@ describe('app', () => {
       });
       it('GET status 200, can change sorted by to any valid column', () => {
         return request(app)
-          .get('/api/articles?sorted_by=author')
+          .get('/api/articles?sorted_by=article_id')
           .expect(200)
           .then(({ body }) => {
-            expect(body.articles).to.be.sortedBy('author', {
+            expect(body.articles).to.be.sortedBy('article_id', {
               descending: true
             });
           });
@@ -224,10 +224,10 @@ describe('app', () => {
       });
       it('GET status 200, can filter by the username value', () => {
         return request(app)
-          .get('/api/articles?author=icellusedkars')
+          .get('/api/articles?username=icellusedkars')
           .expect(200)
           .then(({ body }) => {
-            expect(body.articles[0].author).to.be.equal('icellusedkars');
+            expect(body.articles[0].username).to.be.equal('icellusedkars');
           });
       });
       it('GET status 200, can filter by the topic value', () => {
@@ -243,7 +243,6 @@ describe('app', () => {
           .get('/api/articles')
           .expect(200)
           .then(({ body }) => {
-            console.log(body);
             expect(body.articles).to.have.lengthOf(10);
           });
       });
@@ -269,6 +268,7 @@ describe('app', () => {
           .send({
             author: 'icellusedkars',
             title: 'Student SUES Mitch!',
+            body: 'Hello',
             topic: 'mitch'
           })
           .expect(201)
@@ -276,7 +276,7 @@ describe('app', () => {
             expect(body.article.title).to.equal('Student SUES Mitch!');
           });
       });
-      it.only('ERROR, POST status 400, responds with an error message when it  does not include all the required keys', () => {
+      it('ERROR, POST status 400, responds with an error message when it  does not include all the required keys', () => {
         return request(app)
           .post('/api/articles')
           .send({
@@ -408,6 +408,27 @@ describe('app', () => {
             .expect(200)
             .then(({ body: { article } }) => {
               expect(article.votes).to.equal(100);
+            });
+        });
+        it('DELETE status 204, responds with 204 if success', () => {
+          return request(app)
+            .delete('/api/articles/1')
+            .expect(204);
+        });
+        it('ERROR, DELETE status 400, responds with an error message when wrong id passed', () => {
+          return request(app)
+            .delete('/api/articles/one')
+            .expect(400)
+            .then(({ body }) => {
+              expect(body.msg).to.equal('Bad Request');
+            });
+        });
+        it('ERROR, DELETE status 404, responds with an error message when id does not exist', () => {
+          return request(app)
+            .delete('/api/articles/55')
+            .expect(404)
+            .then(({ body }) => {
+              expect(body.msg).to.equal('Page Not Found');
             });
         });
         describe('/comments', () => {
