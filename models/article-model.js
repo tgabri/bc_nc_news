@@ -25,6 +25,7 @@ exports.selectArticle = article_id => {
       //   });
       // })
       .then(article => {
+        // console.log(article, 'model');
         if (!article.length) {
           return Promise.reject({ msg: 'Page Not Found', status: 404 });
         } else return article;

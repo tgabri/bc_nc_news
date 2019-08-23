@@ -370,25 +370,23 @@ describe('app', () => {
           return request(app)
             .get('/api/articles/1')
             .expect(200)
-            .then(({ body }) => {
-              expect(body).to.be.an('Object');
+            .then(({ body: { article } }) => {
+              console.log(article, 'TEST');
+              expect(article).to.be.an('Array');
             });
         });
-        it('GET status 200, responds with an array of topics objects and each object has the right properties', () => {
+        it('GET status 200, responds with an array of article objects and each object has the right properties', () => {
           return request(app)
             .get('/api/articles/1')
             .expect(200)
-            .then(({ body }) => {
-              expect(body).to.have.keys(
-                'article_id',
-                'title',
-                'topic',
-                'username',
-                'body',
-                'created_at',
-                'votes',
-                'comment_count'
-              );
+            .then(({ body: { article } }) => {
+              expect(article.every(article => article.article_id)).to.be.true;
+              expect(article.every(article => article.title)).to.be.true;
+              expect(article.every(article => article.topic)).to.be.true;
+              expect(article.every(article => article.username)).to.be.true;
+              expect(article.every(article => article.created_at)).to.be.true;
+              expect(article.every(article => article.comment_count)).to.be
+                .true;
             });
         });
         it('ERROR, GET status 404, responds with an error message when the id doesnt exist', () => {
