@@ -1,32 +1,35 @@
 const db = require('../db/connection/connection');
 
 exports.selectArticle = article_id => {
-  return db
-    .select(
-      'articles.article_id',
-      'title',
-      'topic',
-      'articles.author',
-      'articles.body',
-      'articles.created_at',
-      'articles.votes'
-    )
-    .from('articles')
-    .leftJoin('comments', 'articles.article_id', 'comments.article_id')
-    .groupBy('articles.article_id')
-    .count('comments.article_id  as comment_count')
-    .where('articles.article_id', '=', article_id)
-    .then(articles =>
-      articles.map(article => {
-        const { author, ...restOfArticles } = article;
-        return { ...restOfArticles, username: author };
+  return (
+    db
+      .select(
+        'articles.article_id',
+        'title',
+        'topic',
+        'articles.author as username',
+        'articles.body',
+        'articles.created_at',
+        'articles.votes'
+      )
+      .from('articles')
+      .leftJoin('comments', 'articles.article_id', 'comments.article_id')
+      .groupBy('articles.article_id')
+      .count('comments.article_id  as comment_count')
+      .where('articles.article_id', '=', article_id)
+      // .then(articles => {
+      //   console.log(articles);
+      //   articles.map(article => {
+      //     const { author, ...restOfArticles } = article;
+      //     return { ...restOfArticles, username: author };
+      //   });
+      // })
+      .then(article => {
+        if (!article.length) {
+          return Promise.reject({ msg: 'Page Not Found', status: 404 });
+        } else return article;
       })
-    )
-    .then(article => {
-      if (!article.length) {
-        return Promise.reject({ msg: 'Page Not Found', status: 404 });
-      } else return article;
-    });
+  );
 };
 
 exports.updateArticle = ({ article_id }, { inc_votes = 0 }) => {
@@ -42,11 +45,11 @@ exports.updateArticle = ({ article_id }, { inc_votes = 0 }) => {
 };
 
 exports.insertComment = comment => {
-  if (!comment.hasOwnProperty('author', 'body')) {
+  if (!comment.hasOwnProperty('username', 'body')) {
     return Promise.reject({ msg: 'Bad Request', status: 400 });
   } else {
     return db
-      .insert(comment)
+      .insert({ author: comment.username, body: comment.body })
       .into('comments')
       .returning('*');
   }

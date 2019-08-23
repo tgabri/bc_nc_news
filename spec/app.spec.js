@@ -370,16 +370,16 @@ describe('app', () => {
           return request(app)
             .get('/api/articles/1')
             .expect(200)
-            .then(({ body: { article } }) => {
-              expect(article).to.be.an('Object');
+            .then(({ body }) => {
+              expect(body).to.be.an('Object');
             });
         });
         it('GET status 200, responds with an array of topics objects and each object has the right properties', () => {
           return request(app)
             .get('/api/articles/1')
             .expect(200)
-            .then(({ body: { article } }) => {
-              expect(article).to.have.keys(
+            .then(({ body }) => {
+              expect(body).to.have.keys(
                 'article_id',
                 'title',
                 'topic',
@@ -486,12 +486,12 @@ describe('app', () => {
             return request(app)
               .post('/api/articles/3/comments')
               .send({
-                author: 'icellusedkars',
+                username: 'icellusedkars',
                 body: 'I need a new pair of glasses'
               })
               .expect(201)
               .then(({ body }) => {
-                expect(body.comment.body).to.equal(
+                expect(body.comment[0].body).to.equal(
                   'I need a new pair of glasses'
                 );
               });
@@ -500,12 +500,12 @@ describe('app', () => {
             return request(app)
               .post('/api/articles/1/comments')
               .send({
-                author: 'icellusedkars',
+                username: 'icellusedkars',
                 body: 'I need a new pair of glasses'
               })
               .expect(201)
               .then(({ body }) => {
-                expect(body.comment).to.has.keys(
+                expect(body.comment[0]).to.has.keys(
                   'comment_id',
                   'author',
                   'article_id',
@@ -550,16 +550,16 @@ describe('app', () => {
                 expect(body.msg).to.equal('Bad Request');
               });
           });
-          it('ERROR, POST status 422, responds with an error message when the id doesnt exist', () => {
+          it('ERROR, POST status 404, responds with an error message when the id doesnt exist', () => {
             return request(app)
               .post('/api/articles/30/comments')
               .send({
-                author: 'icellusedkars',
+                username: 'icellusedkars',
                 body: 'I need a new pair of glasses'
               })
-              .expect(422)
+              .expect(404)
               .then(({ body }) => {
-                expect(body.msg).to.equal('Unprocessable Entity');
+                expect(body.msg).to.equal('Page Not Found');
               });
           });
           it('GET status 200, can change limit to any number', () => {
