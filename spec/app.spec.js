@@ -59,6 +59,30 @@ describe('app', () => {
             expect(body.topics[0]).to.have.keys('slug', 'description');
           });
       });
+      it('POST status 201, responds with the posted topic object', () => {
+        return request(app)
+          .post('/api/topics')
+          .send({
+            slug: 'witch',
+            description: 'The man, the legend'
+          })
+          .expect(201)
+          .then(({ body }) => {
+            expect(body.topic.slug).to.equal('witch');
+            expect(body.topic.description).to.equal('The man, the legend');
+          });
+      });
+      it('ERROR, POST status 400, responds with an error message when it  does not include all the required keys', () => {
+        return request(app)
+          .post('/api/topics')
+          .send({
+            description: 'Student SUES Mitch!'
+          })
+          .expect(400)
+          .then(({ body }) => {
+            expect(body.msg).to.equal('Bad Request');
+          });
+      });
       it('INVALID METHODS - DELETE, PATCH, PUT, responds with 405', () => {
         const invalidMethods = ['patch', 'put', 'delete'];
         const methodPromises = invalidMethods.map(method => {
@@ -106,6 +130,32 @@ describe('app', () => {
         });
         return Promise.all(methodPromises);
       });
+    });
+    it('POST status 201, responds with the posted user object', () => {
+      return request(app)
+        .post('/api/users')
+        .send({
+          username: 'mitch22',
+          avatar_url:
+            'https://avatars2.githubusercontent.com/u/24604688?s=460&v=4',
+          name: 'mitch'
+        })
+        .expect(201)
+        .then(({ body }) => {
+          expect(body.user.username).to.equal('mitch22');
+          expect(body.user.name).to.equal('mitch');
+        });
+    });
+    it('ERROR, POST status 400, responds with an error message when it  does not include all the required keys', () => {
+      return request(app)
+        .post('/api/users')
+        .send({
+          name: 'Student SUES Mitch!'
+        })
+        .expect(400)
+        .then(({ body }) => {
+          expect(body.msg).to.equal('Bad Request');
+        });
     });
     describe('/users/:username', () => {
       it('GET status 200, responds with a user object', () => {
@@ -164,16 +214,22 @@ describe('app', () => {
         return request(app)
           .get('/api/articles')
           .expect(200)
-          .then(({ body }) => {
-            expect(body.articles[0]).to.have.keys(
-              'article_id',
-              'title',
-              'topic',
-              'author',
-              'created_at',
-              'votes',
-              'comment_count'
-            );
+          .then(({ body: { articles } }) => {
+            expect(articles.every(article => article.article_id)).to.be.true;
+            expect(articles.every(article => article.title)).to.be.true;
+            expect(articles.every(article => article.topic)).to.be.true;
+            expect(articles.every(article => article.username)).to.be.true;
+            expect(articles.every(article => article.created_at)).to.be.true;
+            expect(articles.every(article => article.comment_count)).to.be.true;
+            // expect(articles.every(article => article.votes)).to.be.true;
+          });
+      });
+      it('GET status 200, it has a total_count property', () => {
+        return request(app)
+          .get('/api/articles')
+          .expect(200)
+          .then(({ body: { articles } }) => {
+            expect(articles.every(article => article.total_count)).to.be.true;
           });
       });
       it('GET status 200, [DEFAULT] responds with an array of comments objects sorted by date', () => {
@@ -188,10 +244,10 @@ describe('app', () => {
       });
       it('GET status 200, can change sorted by to any valid column', () => {
         return request(app)
-          .get('/api/articles?sorted_by=author')
+          .get('/api/articles?sorted_by=article_id')
           .expect(200)
           .then(({ body }) => {
-            expect(body.articles).to.be.sortedBy('author', {
+            expect(body.articles).to.be.sortedBy('article_id', {
               descending: true
             });
           });
@@ -218,10 +274,10 @@ describe('app', () => {
       });
       it('GET status 200, can filter by the username value', () => {
         return request(app)
-          .get('/api/articles?author=icellusedkars')
+          .get('/api/articles?username=icellusedkars')
           .expect(200)
           .then(({ body }) => {
-            expect(body.articles[0].author).to.be.equal('icellusedkars');
+            expect(body.articles[0].username).to.be.equal('icellusedkars');
           });
       });
       it('GET status 200, can filter by the topic value', () => {
@@ -230,6 +286,55 @@ describe('app', () => {
           .expect(200)
           .then(({ body }) => {
             expect(body.articles[0].topic).to.be.equal('cats');
+          });
+      });
+      it('GET status 200, [DEFAULT] responds with an array of article objects limited to 10', () => {
+        return request(app)
+          .get('/api/articles')
+          .expect(200)
+          .then(({ body }) => {
+            expect(body.articles).to.have.lengthOf(10);
+          });
+      });
+      it('GET status 200, can change limit to any number', () => {
+        return request(app)
+          .get('/api/articles?limit=5')
+          .expect(200)
+          .then(({ body }) => {
+            expect(body.articles).to.have.lengthOf(5);
+          });
+      });
+      it('GET status 200, can pick a page to start from', () => {
+        return request(app)
+          .get('/api/articles?limit=5&p=3')
+          .expect(200)
+          .then(({ body }) => {
+            expect(body.articles).to.have.lengthOf(2);
+          });
+      });
+      it('POST status 201, responds with the posted comment object', () => {
+        return request(app)
+          .post('/api/articles')
+          .send({
+            author: 'icellusedkars',
+            title: 'Student SUES Mitch!',
+            body: 'Hello',
+            topic: 'mitch'
+          })
+          .expect(201)
+          .then(({ body }) => {
+            expect(body.article.title).to.equal('Student SUES Mitch!');
+          });
+      });
+      it('ERROR, POST status 400, responds with an error message when it  does not include all the required keys', () => {
+        return request(app)
+          .post('/api/articles')
+          .send({
+            title: 'Student SUES Mitch!'
+          })
+          .expect(400)
+          .then(({ body }) => {
+            expect(body.msg).to.equal('Bad Request');
           });
       });
       it('ERROR, GET status 404, responds with an error message when the id doesnt exist', () => {
@@ -278,7 +383,7 @@ describe('app', () => {
                 'article_id',
                 'title',
                 'topic',
-                'author',
+                'username',
                 'body',
                 'created_at',
                 'votes',
@@ -353,6 +458,27 @@ describe('app', () => {
             .expect(200)
             .then(({ body: { article } }) => {
               expect(article.votes).to.equal(100);
+            });
+        });
+        it('DELETE status 204, responds with 204 if success', () => {
+          return request(app)
+            .delete('/api/articles/1')
+            .expect(204);
+        });
+        it('ERROR, DELETE status 400, responds with an error message when wrong id passed', () => {
+          return request(app)
+            .delete('/api/articles/one')
+            .expect(400)
+            .then(({ body }) => {
+              expect(body.msg).to.equal('Bad Request');
+            });
+        });
+        it('ERROR, DELETE status 404, responds with an error message when id does not exist', () => {
+          return request(app)
+            .delete('/api/articles/55')
+            .expect(404)
+            .then(({ body }) => {
+              expect(body.msg).to.equal('Page Not Found');
             });
         });
         describe('/comments', () => {
@@ -434,6 +560,22 @@ describe('app', () => {
               .expect(422)
               .then(({ body }) => {
                 expect(body.msg).to.equal('Unprocessable Entity');
+              });
+          });
+          it('GET status 200, can change limit to any number', () => {
+            return request(app)
+              .get('/api/articles/1/comments?limit=10')
+              .expect(200)
+              .then(({ body }) => {
+                expect(body.comments).to.have.lengthOf(10);
+              });
+          });
+          it('GET status 200, can pick a page to start from', () => {
+            return request(app)
+              .get('/api/articles/1/comments?limit=10&p=2')
+              .expect(200)
+              .then(({ body }) => {
+                expect(body.comments).to.have.lengthOf(3);
               });
           });
           it('GET status 200, responds with an array of objects', () => {

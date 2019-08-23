@@ -16,6 +16,12 @@ exports.selectArticle = article_id => {
     .groupBy('articles.article_id')
     .count('comments.article_id  as comment_count')
     .where('articles.article_id', '=', article_id)
+    .then(articles =>
+      articles.map(article => {
+        const { author, ...restOfArticles } = article;
+        return { ...restOfArticles, username: author };
+      })
+    )
     .then(article => {
       if (!article.length) {
         return Promise.reject({ msg: 'Page Not Found', status: 404 });
@@ -36,37 +42,69 @@ exports.updateArticle = ({ article_id }, { inc_votes = 0 }) => {
 };
 
 exports.insertComment = comment => {
-  return db
-    .insert(comment)
-    .into('comments')
-    .returning('*');
+  if (!comment.hasOwnProperty('author', 'body')) {
+    return Promise.reject({ msg: 'Bad Request', status: 400 });
+  } else {
+    return db
+      .insert(comment)
+      .into('comments')
+      .returning('*');
+  }
+};
+
+exports.insertArticle = article => {
+  if (!article.hasOwnProperty('author', 'body', 'title', 'topic')) {
+    return Promise.reject({ msg: 'Bad Request', status: 400 });
+  } else {
+    return db
+      .insert(article)
+      .into('articles')
+      .returning('*');
+  }
+};
+
+exports.deleteArticle = ({ article_id }) => {
+  return db('articles')
+    .where('article_id', '=', article_id)
+    .del()
+    .then(article => {
+      if (article === 0)
+        return Promise.reject({ msg: 'Page Not Found', status: 404 });
+    });
 };
 
 exports.selectComments = (
   article_id,
   order = 'desc',
-  sorted_by = 'created_at'
+  sorted_by = 'created_at',
+  limit = 10,
+  p
 ) => {
   return db
     .select('comment_id', 'votes', 'author', 'body', 'created_at')
     .from('comments')
     .where('article_id', '=', article_id)
-    .orderBy(sorted_by, order);
+    .orderBy(sorted_by, order)
+    .limit(limit)
+    .offset(p * limit - limit);
 };
 
 exports.selectArticles = ({
   sorted_by = 'created_at',
   order = 'desc',
   author,
-  topic
+  topic,
+  limit = 10,
+  p,
+  username
 }) => {
   if (
     sorted_by === 'article_id' ||
-    sorted_by === 'title' ||
-    sorted_by === 'topic' ||
-    sorted_by === 'author' ||
-    sorted_by === 'created_at' ||
-    sorted_by === 'votes'
+    'title' ||
+    'topic' ||
+    'author' ||
+    'created_at' ||
+    'votes'
   ) {
     return db
       .select(
@@ -81,21 +119,33 @@ exports.selectArticles = ({
       .leftJoin('comments', 'articles.article_id', 'comments.article_id')
       .groupBy('articles.article_id')
       .count('comments.article_id as comment_count')
+      .count('articles.article_id as total_count')
       .orderBy(sorted_by, order)
+      .limit(limit)
+      .offset(p * limit - limit)
       .modify(existingQuery => {
         if (author) {
           existingQuery.where('articles.author', '=', author);
+        }
+        if (username) {
+          existingQuery.where('articles.author', '=', username);
         }
         if (topic) {
           existingQuery.where('articles.topic', '=', topic);
         } else existingQuery;
       })
+      .then(articles =>
+        articles.map(article => {
+          const { author, ...restOfArticles } = article;
+          return { ...restOfArticles, username: author };
+        })
+      )
       .then(articles => {
         if (!articles.length) {
           return Promise.reject({ msg: 'Page Not Found', status: 404 });
         } else return articles;
       });
   } else {
+    return Promise.reject({ msg: 'Bad Request', status: 400 });
   }
-  return Promise.reject({ msg: 'Bad Request', status: 400 });
 };

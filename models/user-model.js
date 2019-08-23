@@ -15,3 +15,14 @@ exports.selectUser = ({ username }) => {
       } else return user;
     });
 };
+
+exports.insertUser = user => {
+  if (!user.hasOwnProperty('username')) {
+    return Promise.reject({ msg: 'Bad Request', status: 400 });
+  } else {
+    return db
+      .insert(user)
+      .into('users')
+      .returning('*');
+  }
+};
