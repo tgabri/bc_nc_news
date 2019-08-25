@@ -382,7 +382,7 @@ describe('app', () => {
               expect(article.every(article => article.article_id)).to.be.true;
               expect(article.every(article => article.title)).to.be.true;
               expect(article.every(article => article.topic)).to.be.true;
-              expect(article.every(article => article.username)).to.be.true;
+              expect(article.every(article => article.author)).to.be.true;
               expect(article.every(article => article.created_at)).to.be.true;
               expect(article.every(article => article.comment_count)).to.be
                 .true;

@@ -7,7 +7,7 @@ exports.selectArticle = article_id => {
         'articles.article_id',
         'title',
         'topic',
-        'articles.author as username',
+        'articles.author',
         'articles.body',
         'articles.created_at',
         'articles.votes'
