@@ -218,7 +218,7 @@ describe('app', () => {
             expect(articles.every(article => article.article_id)).to.be.true;
             expect(articles.every(article => article.title)).to.be.true;
             expect(articles.every(article => article.topic)).to.be.true;
-            expect(articles.every(article => article.username)).to.be.true;
+            expect(articles.every(article => article.author)).to.be.true;
             expect(articles.every(article => article.created_at)).to.be.true;
             expect(articles.every(article => article.comment_count)).to.be.true;
             // expect(articles.every(article => article.votes)).to.be.true;
@@ -236,8 +236,8 @@ describe('app', () => {
         return request(app)
           .get('/api/articles')
           .expect(200)
-          .then(({ body }) => {
-            expect(body.articles).to.be.sortedBy('created_at', {
+          .then(({ body: { articles } }) => {
+            expect(articles).to.be.sortedBy('created_at', {
               descending: true
             });
           });
@@ -272,12 +272,12 @@ describe('app', () => {
             });
           });
       });
-      it('GET status 200, can filter by the username value', () => {
+      it('GET status 200, can filter by the author value', () => {
         return request(app)
-          .get('/api/articles?username=icellusedkars')
+          .get('/api/articles?author=icellusedkars')
           .expect(200)
           .then(({ body }) => {
-            expect(body.articles[0].username).to.be.equal('icellusedkars');
+            expect(body.articles[0].author).to.be.equal('icellusedkars');
           });
       });
       it('GET status 200, can filter by the topic value', () => {
@@ -371,7 +371,6 @@ describe('app', () => {
             .get('/api/articles/1')
             .expect(200)
             .then(({ body: { article } }) => {
-              console.log(article, 'TEST');
               expect(article).to.be.an('Array');
             });
         });
