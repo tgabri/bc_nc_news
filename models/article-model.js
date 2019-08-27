@@ -25,7 +25,6 @@ exports.selectArticle = article_id => {
       //   });
       // })
       .then(article => {
-        // console.log(article, 'model');
         if (!article.length) {
           return Promise.reject({ msg: 'Page Not Found', status: 404 });
         } else return article;
@@ -50,7 +49,11 @@ exports.insertComment = comment => {
     return Promise.reject({ msg: 'Bad Request', status: 400 });
   } else {
     return db
-      .insert({ author: comment.username, body: comment.body })
+      .insert({
+        article_id: comment.article_id,
+        author: comment.username,
+        body: comment.body
+      })
       .into('comments')
       .returning('*');
   }
