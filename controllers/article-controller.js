@@ -28,13 +28,9 @@ exports.patchArticle = (req, res, next) => {
 
 exports.createComment = (req, res, next) => {
   const { article_id } = req.params;
-  const article = selectArticle(article_id);
-  const comments = insertComment({ ...req.params, ...req.body });
-  Promise.all([article, comments])
-    .then(([article, comment]) => {
-      if (article[0]) {
-        res.status(201).send({ comment });
-      }
+  insertComment({ ...req.params, ...req.body })
+    .then(([comment]) => {
+      res.status(201).send({ comment });
     })
     .catch(next);
 };

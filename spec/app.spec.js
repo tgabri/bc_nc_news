@@ -488,7 +488,7 @@ describe('app', () => {
               })
               .expect(201)
               .then(({ body }) => {
-                expect(body.comment[0].body).to.equal(
+                expect(body.comment.body).to.equal(
                   'I need a new pair of glasses'
                 );
               });
@@ -502,7 +502,7 @@ describe('app', () => {
               })
               .expect(201)
               .then(({ body }) => {
-                expect(body.comment[0]).to.has.keys(
+                expect(body.comment).to.has.keys(
                   'comment_id',
                   'author',
                   'article_id',
@@ -547,16 +547,16 @@ describe('app', () => {
                 expect(body.msg).to.equal('Bad Request');
               });
           });
-          it('ERROR, POST status 404, responds with an error message when the id doesnt exist', () => {
+          it('ERROR, POST status 422, responds with an error message when the id doesnt exist', () => {
             return request(app)
               .post('/api/articles/30/comments')
               .send({
                 username: 'icellusedkars',
                 body: 'I need a new pair of glasses'
               })
-              .expect(404)
+              .expect(422)
               .then(({ body }) => {
-                expect(body.msg).to.equal('Page Not Found');
+                expect(body.msg).to.equal('Unprocessable Entity');
               });
           });
           it('GET status 200, can change limit to any number', () => {
