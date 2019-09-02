@@ -221,15 +221,14 @@ describe('app', () => {
             expect(articles.every(article => article.author)).to.be.true;
             expect(articles.every(article => article.created_at)).to.be.true;
             expect(articles.every(article => article.comment_count)).to.be.true;
-            // expect(articles.every(article => article.votes)).to.be.true;
           });
       });
       it('GET status 200, it has a total_count property', () => {
         return request(app)
           .get('/api/articles')
           .expect(200)
-          .then(({ body: { articles } }) => {
-            expect(articles.every(article => article.total_count)).to.be.true;
+          .then(({ body }) => {
+            expect(body).to.haveOwnProperty('total_count');
           });
       });
       it('GET status 200, [DEFAULT] responds with an array of comments objects sorted by date', () => {

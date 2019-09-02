@@ -5,7 +5,8 @@ const {
   selectComments,
   selectArticles,
   insertArticle,
-  deleteArticle
+  deleteArticle,
+  noLimitArticles
 } = require('../models/article-model');
 
 exports.getArticle = (req, res, next) => {
@@ -60,9 +61,12 @@ exports.getComments = (req, res, next) => {
 };
 
 exports.getArticles = (req, res, next) => {
-  selectArticles(req.query)
-    .then(articles => {
-      res.status(200).send({ articles });
+  const noLimit = noLimitArticles();
+  const selected = selectArticles(req.query);
+  Promise.all([noLimit, selected])
+    .then(([noLimit, articles]) => {
+      const total_count = noLimit.length;
+      res.status(200).send({ articles, total_count });
     })
     .catch(next);
 };

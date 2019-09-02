@@ -1,35 +1,26 @@
 const db = require('../db/connection/connection');
 
 exports.selectArticle = article_id => {
-  return (
-    db
-      .select(
-        'articles.article_id',
-        'title',
-        'topic',
-        'articles.author',
-        'articles.body',
-        'articles.created_at',
-        'articles.votes'
-      )
-      .from('articles')
-      .leftJoin('comments', 'articles.article_id', 'comments.article_id')
-      .groupBy('articles.article_id')
-      .count('comments.article_id  as comment_count')
-      .where('articles.article_id', '=', article_id)
-      // .then(articles => {
-      //   console.log(articles);
-      //   articles.map(article => {
-      //     const { author, ...restOfArticles } = article;
-      //     return { ...restOfArticles, username: author };
-      //   });
-      // })
-      .then(article => {
-        if (!article.length) {
-          return Promise.reject({ msg: 'Page Not Found', status: 404 });
-        } else return article;
-      })
-  );
+  return db
+    .select(
+      'articles.article_id',
+      'title',
+      'topic',
+      'articles.author',
+      'articles.body',
+      'articles.created_at',
+      'articles.votes'
+    )
+    .from('articles')
+    .leftJoin('comments', 'articles.article_id', 'comments.article_id')
+    .groupBy('articles.article_id')
+    .count('comments.article_id  as comment_count')
+    .where('articles.article_id', '=', article_id)
+    .then(article => {
+      if (!article.length) {
+        return Promise.reject({ msg: 'Page Not Found', status: 404 });
+      } else return article;
+    });
 };
 
 exports.updateArticle = ({ article_id }, { inc_votes = 0 }) => {
@@ -96,6 +87,10 @@ exports.selectComments = (
     .offset(p * limit - limit);
 };
 
+exports.noLimitArticles = () => {
+  return db.select('articles.article_id').from('articles');
+};
+
 exports.selectArticles = ({
   sorted_by = 'created_at',
   order = 'desc',
@@ -113,47 +108,39 @@ exports.selectArticles = ({
     'created_at' ||
     'votes'
   ) {
-    return (
-      db
-        .select(
-          'articles.article_id',
-          'title',
-          'topic',
-          'articles.author',
-          'articles.created_at',
-          'articles.votes'
-        )
-        .from('articles')
-        .leftJoin('comments', 'articles.article_id', 'comments.article_id')
-        .groupBy('articles.article_id')
-        .count('comments.article_id as comment_count')
-        .count('articles.article_id as total_count')
-        .orderBy(sorted_by, order)
-        .limit(limit)
-        .offset(p * limit - limit)
-        .modify(existingQuery => {
-          if (author) {
-            existingQuery.where('articles.author', '=', author);
-          }
-          if (username) {
-            existingQuery.where('articles.author', '=', username);
-          }
-          if (topic) {
-            existingQuery.where('articles.topic', '=', topic);
-          } else existingQuery;
-        })
-        // .then(articles =>
-        //   articles.map(article => {
-        //     const { author, ...restOfArticles } = article;
-        //     return { ...restOfArticles, username: author };
-        //   })
-        // )
-        .then(articles => {
-          if (!articles.length) {
-            return Promise.reject({ msg: 'Page Not Found', status: 404 });
-          } else return articles;
-        })
-    );
+    return db
+      .select(
+        'articles.article_id',
+        'title',
+        'topic',
+        'articles.author',
+        'articles.created_at',
+        'articles.votes'
+      )
+      .from('articles')
+      .leftJoin('comments', 'articles.article_id', 'comments.article_id')
+      .groupBy('articles.article_id')
+      .count('comments.article_id as comment_count')
+      .count('articles.article_id as total_count')
+      .orderBy(sorted_by, order)
+      .limit(limit)
+      .offset(p * limit - limit)
+      .modify(existingQuery => {
+        if (author) {
+          existingQuery.where('articles.author', '=', author);
+        }
+        if (username) {
+          existingQuery.where('articles.author', '=', username);
+        }
+        if (topic) {
+          existingQuery.where('articles.topic', '=', topic);
+        } else existingQuery;
+      })
+      .then(articles => {
+        if (!articles.length) {
+          return Promise.reject({ msg: 'Page Not Found', status: 404 });
+        } else return articles;
+      });
   } else {
     return Promise.reject({ msg: 'Bad Request', status: 400 });
   }
