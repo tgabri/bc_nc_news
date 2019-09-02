@@ -61,7 +61,7 @@ exports.getComments = (req, res, next) => {
 };
 
 exports.getArticles = (req, res, next) => {
-  const noLimit = noLimitArticles();
+  const noLimit = noLimitArticles(req.query);
   const selected = selectArticles(req.query);
   Promise.all([noLimit, selected])
     .then(([noLimit, articles]) => {

@@ -87,8 +87,18 @@ exports.selectComments = (
     .offset(p * limit - limit);
 };
 
-exports.noLimitArticles = () => {
-  return db.select('articles.article_id').from('articles');
+exports.noLimitArticles = ({ topic, author }) => {
+  return db
+    .select('*')
+    .from('articles')
+    .modify(existingQuery => {
+      if (author) {
+        existingQuery.where('articles.author', '=', author);
+      }
+      if (topic) {
+        existingQuery.where('articles.topic', '=', topic);
+      } else existingQuery;
+    });
 };
 
 exports.selectArticles = ({
@@ -121,11 +131,11 @@ exports.selectArticles = ({
       .leftJoin('comments', 'articles.article_id', 'comments.article_id')
       .groupBy('articles.article_id')
       .count('comments.article_id as comment_count')
-      .count('articles.article_id as total_count')
       .orderBy(sorted_by, order)
       .limit(limit)
       .offset(p * limit - limit)
       .modify(existingQuery => {
+        console.log(topic);
         if (author) {
           existingQuery.where('articles.author', '=', author);
         }
@@ -141,6 +151,7 @@ exports.selectArticles = ({
           return Promise.reject({ msg: 'Page Not Found', status: 404 });
         } else return articles;
       });
+    // .catch(err => console.log(err));
   } else {
     return Promise.reject({ msg: 'Bad Request', status: 400 });
   }

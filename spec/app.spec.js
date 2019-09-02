@@ -225,7 +225,7 @@ describe('app', () => {
       });
       it('GET status 200, it has a total_count property', () => {
         return request(app)
-          .get('/api/articles')
+          .get('/api/articles?topic=mitch&p=2')
           .expect(200)
           .then(({ body }) => {
             expect(body).to.haveOwnProperty('total_count');
